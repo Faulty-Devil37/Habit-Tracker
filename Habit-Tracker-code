@@ -1,0 +1,112 @@
+from datetime import datetime,date,time,timedelta
+import pickle
+
+class Habit:
+    
+    def __init__(self,name,category,frequency):
+        self.name = name
+        categories = {1 : 'Health',2:'Work',3:'Others'}
+        self.category = categories.get(category,'Others')
+        self.frequency = 'Daily' if frequency ==1 else 'weekly'
+        self.targets_per_week = 7 if frequency == 1 else 1
+        self.completion_dates = []
+        self.streak = 0
+
+    def streaks(self):
+        n = len(self.completion_dates)
+        try :
+            a,b = self.completion_dates[n-1],self.completion_dates[n-2]
+            if a - timedelta(days=1) == b :
+                self.streak += 1
+            else :
+                self.streak = 1
+        except :
+            print("No streak yet")  
+
+    def mark_complete(self):
+        if date.today() in self.completion_dates :
+            print("Already Completed Today")
+        else :
+            self.completion_dates.append(date.today())
+            print(f"{self.name} completed✅ successfully")
+        self.streaks()
+        
+    def is_completed(self):
+        return True if date.today() in self.completion_dates else False
+         
+    def __str__(self):
+        status = self.is_completed()
+        return ( f'''{self.name},{self.category},{self.frequency}
+Status : Completed Today ✅
+Streak : {self.streak}                                           '''        
+        if status == True 
+                else f'''{self.name},{self.category},{self.frequency}
+Status : Yet to be completed🔳
+Streak : {self.streak}                                           ''')
+
+class Habit_tracker :
+    id = 1
+    def __init__(self):
+        self.habits = {}
+        self.access()
+
+    def save(self):
+        with open('Data.pickle','wb') as f:
+            pickle.dump(self.habits,f)
+            pickle.dump(Habit_tracker.id,f)
+    
+    def access(self):
+        try :
+            with open('Data.pickle','rb') as f:
+                self.habits = pickle.load(f)
+                Habit_tracker.id = pickle.load(f)
+        except FileNotFoundError:
+            print("No saved habits found. Starting fresh! 🆕")
+
+    def add_habit(self,name,category,frequency):
+        habit = Habit(name,category,frequency)
+        self.habits[Habit_tracker.id] = habit
+        Habit_tracker.id += 1 
+
+    def view_habits(self):
+        for key,value in self.habits.items():
+            print(key,'-',value) 
+
+tracker = Habit_tracker()
+
+while True : 
+
+        choice = int(input('''
+                --------------Menu------------
+               | 1.View Habits                 |
+               | 2.Add new habit               |
+               | 3.Update habit                |
+               | 4.Remove habits               |
+               | 5.Exit to home                |
+                -------------------------------
+                Enter the corresponging no. for which action you want to do 
+                '''))
+    
+        if choice == 1:
+            tracker.view_habits()
+        elif choice == 2:
+            name,category,frequency = input("Enter the name, category(1-Health , 2-Work & 3-others) and frequency(1-daily , 2-weekly) of your habit you wanna add(seperated by commas): ").split(',')
+            tracker.add_habit(name,int(category),int(frequency))
+            tracker.view_habits()
+            tracker.save()
+        elif choice == 3 :
+            input_1 = int(input("Enter the id of the Habit : "))
+            result = tracker.habits.get(input_1,"Not available")
+            try :
+                result.mark_complete()
+            except:
+                print("No Habit Found")
+            tracker.save()
+        elif choice == 4 :
+            input_2 = int(input("Enter the id of the habit : "))
+            popped = tracker.habits.pop(input_2)
+            print(f"{popped} removed successfully✅")
+            tracker.save()
+        else :
+            break
+    
